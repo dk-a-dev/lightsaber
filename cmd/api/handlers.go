@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"lightsabor.dkadev.net/internal/data"
 	"lightsabor.dkadev.net/internal/validator"
@@ -57,13 +57,11 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		app.notFoundResponse(w, r)
 		return
 	}
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Yeh Jawani hai Dewaani",
-		Runtime:   120,
-		Genres:    []string{"drama", "comedy", "romance"},
-		Version:   1,
+	movie, err := app.models.Movies.Get(id)
+	if err != nil {
+		if errors.Is(err, data.ErrRecordNotFound) {
+			app.notFoundResponse(w, r)
+		}
 	}
 
 	err = app.writeJson(w, http.StatusOK, envelope{"movie": movie}, nil)
