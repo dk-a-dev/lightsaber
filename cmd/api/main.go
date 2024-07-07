@@ -73,12 +73,13 @@ func main() {
 	srv := &http.Server{
 		Addr:         cfg.port,
 		Handler:      app.router(),
+		ErrorLog:     log.New(logger, "", 0),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
-	logger.PrintInfo("starting %s server on %s", map[string]string{
+	logger.PrintInfo("starting server", map[string]string{
 		"addr": srv.Addr,
 		"env":  cfg.env,
 	})
