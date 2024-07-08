@@ -1,0 +1,20 @@
+{{define "subject"}}Welcome to LightSabor!{{end}} {{define "body"}}
+<p>Hi {{.Name}},</p>
+<p>Welcome to LightSabor! We're excited to have you on board.</p>
+<p>Best,</p>
+<p>The LightSabor Team</p>
+{{end}}
+{{define "htmlBody"}}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <p>Hi {{.Name}},</p>
+    <p>Welcome to LightSabor! We're excited to have you on board.</p>
+    <p>Best,</p>
+    <p>The LightSabor Team</p>
+  </body>
+</html>
+{{end}}
