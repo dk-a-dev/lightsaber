@@ -26,7 +26,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Email:     input.Email,
 		Activated: false,
 	}
-	
+
 	err = user.Password.Set(input.Password)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -50,6 +50,11 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 			app.serverErrorResponse(w, r, err)
 		}
 		return
+	}
+
+	err = app.mailer.Send(user.Email, "welcome_user.html", user)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 
 	err = app.writeJson(w, http.StatusCreated, envelope{"user": user}, nil)
