@@ -6,12 +6,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"lightsaber.dkadev.xyz/internal/data"
 	"lightsaber.dkadev.xyz/internal/jsonlog"
+	"lightsaber.dkadev.xyz/internal/mailer"
+
+	_ "github.com/lib/pq"
 )
 
 const version = "1.0.0"
@@ -30,12 +34,21 @@ type config struct {
 		burst   int
 		enabled bool
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -59,6 +72,12 @@ func main() {
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	cfg.db.dsn = fmt.Sprintf("postgres://%s:%s@localhost/greenlight?sslmode=disable", dbUser, dbPassword)
+	cfg.smtp.host = os.Getenv("HOST")
+	cfg.smtp.port, _ = strconv.Atoi(os.Getenv("PORT"))
+	cfg.smtp.username = os.Getenv("USERNAME")
+	cfg.smtp.sender = os.Getenv("SENDER")
+	cfg.smtp.password = os.Getenv("PASSWORD")
+
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.PrintFatal(err, nil)
@@ -70,7 +89,9 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
+
 	err = app.serve()
 	if err != nil {
 		logger.PrintFatal(err, nil)
