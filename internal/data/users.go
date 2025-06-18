@@ -2,8 +2,10 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -38,7 +40,7 @@ func (m UserModel) Insert(user *User) error {
 			Values($1,$2,$3)
 			RETURNING id,created_at,version`
 
-	args := []any{user.Name, user.Email, user.Password.plaintext}
+	args := []any{user.Name, user.Email, user.Password.hash}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -83,6 +85,45 @@ func (u UserModel) GetByEmail(email string) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+	query := `SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
+		FROM users
+		INNER JOIN tokens
+		ON users.id = tokens.user_id
+		WHERE tokens.hash = $1
+		AND tokens.scope = $2
+		AND tokens.expiry > $3`
+
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &user, nil
+
 }
 
 func (m UserModel) Update(user *User) error {
@@ -131,12 +172,15 @@ func (p *password) Set(plaintextPass string) error {
 }
 
 func (p *password) Matches(plaintextPass string) (bool, error) {
+	fmt.Println(string(p.hash), plaintextPass)
 	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPass))
 	if err != nil {
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			fmt.Println(err)
 			return false, nil
 		default:
+			fmt.Println(err)
 			return false, err
 		}
 	}
