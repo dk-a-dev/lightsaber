@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -178,15 +177,12 @@ func (p *password) Set(plaintextPass string) error {
 }
 
 func (p *password) Matches(plaintextPass string) (bool, error) {
-	fmt.Println(string(p.hash), plaintextPass)
 	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPass))
 	if err != nil {
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
-			fmt.Println(err)
 			return false, nil
 		default:
-			fmt.Println(err)
 			return false, err
 		}
 	}
