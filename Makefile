@@ -1,5 +1,5 @@
 #Include the .env file if it exists
-include .envrc
+include .env
 
 # ==================================================================================== #
 # HELPERS
