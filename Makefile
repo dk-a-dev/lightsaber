@@ -58,3 +58,19 @@ audit:
 	staticcheck ./...
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
+
+# ==================================================================================== #
+# BUILD
+# ==================================================================================== #
+
+current_time := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+git_description = $(shell git describe --always --dirty)
+linker_flags := -s -X main.buildTime=${current_time}
+# Build the application and create a Linux binary
+.PHONY: build
+build:
+	@echo 'Building the application...'
+	go build -ldflags='$(linker_flags)' -o=./bin/api ./cmd/api
+	@echo 'Building for Linux...'
+	GOOS=linux GOARCH=amd64 go build -ldflags='$(linker_flags)' -o=./bin/api-linux_amd64 ./cmd/api
+	@echo 'Build complete!'
