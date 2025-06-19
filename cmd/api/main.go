@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,6 +41,9 @@ type config struct {
 		username string
 		password string
 		sender   string
+	}
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -77,6 +81,7 @@ func main() {
 	cfg.smtp.username = os.Getenv("USERNAME")
 	cfg.smtp.sender = os.Getenv("SENDER")
 	cfg.smtp.password = os.Getenv("PASSWORD")
+	cfg.cors.trustedOrigins = strings.Split(os.Getenv("TRUSTED_ORIGINS"), ",")
 
 	db, err := openDB(cfg)
 	if err != nil {
