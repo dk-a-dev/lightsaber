@@ -74,3 +74,22 @@ build:
 	@echo 'Building for Linux...'
 	GOOS=linux GOARCH=amd64 go build -ldflags='$(linker_flags)' -o=./bin/api-linux_amd64 ./cmd/api
 	@echo 'Build complete!'
+
+# ==================================================================================== #
+# DOCKER
+# ==================================================================================== #
+
+## docker/build: Build Docker image
+.PHONY: docker/build
+docker/build:
+	docker build -t lightsaber-api .
+
+## docker/up: Start services using Docker Compose
+.PHONY: docker/up
+docker/up:
+	docker-compose up --build
+
+## docker/down: Stop and remove containers
+.PHONY: docker/down
+docker/down:
+	docker-compose down

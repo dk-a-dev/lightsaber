@@ -80,7 +80,7 @@ func main() {
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}

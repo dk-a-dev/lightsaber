@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./.env:/app/.env
+    depends_on:
+      - db
+    environment:
+      - GREENLIGHT_DB_DSN=postgres://greenlight:password@db:5432/greenlight?sslmode=disable
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: greenlight
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: greenlight
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      - db
+    volumes:
+      - ./migrations:/migrations
+    entrypoint: [ "migrate", "-path=/migrations", "-database", "postgres://greenlight:password@db:5432/greenlight?sslmode=disable", "up" ]
+
+volumes:
+  db_data:
