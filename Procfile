@@ -1,0 +1,1 @@
+web: migrate -path ./migrations -database "$DATABASE_URL" up && go run ./cmd/api

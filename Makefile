@@ -36,7 +36,7 @@ db/migration/new:
 .PHONY: db/migrations/up
 db/migration/up: confirm
 	@echo "Running up migrations..."
-	migrate -path ./migrations -database ${GREENLIGHT_DB_DSN} up
+	migrate -path ./migrations -database ${DATABASE_URL} up
 
 # ==================================================================================== #
 # QUALITY CONTROL
