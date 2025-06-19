@@ -64,7 +64,7 @@ audit:
 # ==================================================================================== #
 
 current_time := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-git_description := $(shell git describe --always --dirty)
+git_description := $(shell git describe --always --dirty --tags --long)
 linker_flags := -s -X main.buildTime=${current_time} -X main.version=${git_description}
 # Build the application and create a Linux binary
 .PHONY: build
