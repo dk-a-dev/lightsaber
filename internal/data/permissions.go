@@ -49,7 +49,7 @@ func (m PermissionModel) GetAllForUser(userID int64) (Permissions, error) {
 }
 
 func (m PermissionModel) AddForUser(userId int64, codes ...string) error {
-	query :=`INSERT INTO users_permissions
+	query := `INSERT INTO users_permissions
 	SELECT $1, permissions.id FROM permissions WHERE permissions.code = ANY($2)`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
