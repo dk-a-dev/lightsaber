@@ -84,9 +84,10 @@ func main() {
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	cfg.db.dsn = fmt.Sprintf("postgres://%s:%s@localhost/greenlight?sslmode=disable", dbUser, dbPassword)
+	// dbUser := os.Getenv("DB_USER")
+	// dbPassword := os.Getenv("DB_PASSWORD")
+	// cfg.db.dsn = fmt.Sprintf("postgres://%s:%s@localhost/greenlight?sslmode=disable", dbUser, dbPassword)
+	cfg.db.dsn = os.Getenv("DATABASE_URL")
 	cfg.smtp.host = os.Getenv("HOST")
 	cfg.smtp.port, _ = strconv.Atoi(os.Getenv("PORT"))
 	cfg.smtp.username = os.Getenv("USERNAME")
