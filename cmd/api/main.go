@@ -17,6 +17,7 @@ import (
 	"lightsaber.dkadev.xyz/internal/data"
 	"lightsaber.dkadev.xyz/internal/jsonlog"
 	"lightsaber.dkadev.xyz/internal/mailer"
+	"lightsaber.dkadev.xyz/internal/metrics"
 
 	_ "github.com/lib/pq"
 )
@@ -53,11 +54,12 @@ type config struct {
 }
 
 type application struct {
-	config config
-	logger *jsonlog.Logger
-	models data.Models
-	mailer mailer.Mailer
-	wg     sync.WaitGroup
+	config        config
+	logger        *jsonlog.Logger
+	models        data.Models
+	mailer        mailer.Mailer
+	metricsClient *metrics.Client
+	wg            sync.WaitGroup
 }
 
 func main() {
@@ -112,11 +114,20 @@ func main() {
 	expvar.Publish("timestamp", expvar.Func(func() any {
 		return time.Now()
 	}))
+
+	// Initialize metrics client
+	metricsClient, err := metrics.NewClient("graphite", "2003", "lightsaber")
+	if err != nil {
+		logger.PrintError(err, map[string]string{"context": "metrics client initialization failed"})
+		metricsClient = nil // Continue without metrics if Graphite is not available
+	}
+
 	app := &application{
-		config: cfg,
-		logger: logger,
-		models: data.NewModels(db),
-		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
+		config:        cfg,
+		logger:        logger,
+		models:        data.NewModels(db),
+		mailer:        mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
+		metricsClient: metricsClient,
 	}
 
 	err = app.serve()

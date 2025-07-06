@@ -43,5 +43,38 @@ services:
     command: ["-path", "/migrations", "-database", "postgres://greenlight:password@db:5432/greenlight?sslmode=disable", "up"]
     restart: "no"
 
+  # Monitoring Stack
+  graphite:
+    image: graphiteapp/graphite-statsd:latest
+    container_name: lightsaber-graphite
+    ports:
+      - "8080:80"      # Graphite web interface
+      - "2003:2003"    # Carbon receiver - plaintext
+      - "2004:2004"    # Carbon receiver - pickle
+      - "8125:8125/udp" # StatsD
+    volumes:
+      - graphite_data:/opt/graphite/storage
+    environment:
+      - GRAPHITE_TIME_ZONE=UTC
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lightsaber-grafana
+    ports:
+      - "3000:3000"    # Grafana web interface
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - graphite
+    restart: unless-stopped
+
 volumes:
   db_data:
+  graphite_data:
+  grafana_data:

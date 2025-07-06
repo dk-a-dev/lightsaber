@@ -185,11 +185,23 @@ func (app *application) metrics(next http.Handler) http.Handler {
 		start := time.Now()
 		totalRequestsReceived.Add(1)
 
+		// Track request in Graphite
+		if app.metricsClient != nil {
+			app.metricsClient.Increment("api.requests.total")
+			app.metricsClient.Increment(fmt.Sprintf("api.requests.%s", r.Method))
+		}
+
 		next.ServeHTTP(w, r)
 
 		totalResponsesSent.Add(1)
 
 		duration := time.Since(start).Microseconds()
 		totalProcessingTimeMicroseconds.Add(duration)
+
+		// Track response time in Graphite
+		if app.metricsClient != nil {
+			app.metricsClient.Timer("api.response_time", time.Duration(duration*1000)) // Convert to nanoseconds
+			app.metricsClient.Timer(fmt.Sprintf("api.response_time.%s", r.Method), time.Duration(duration*1000))
+		}
 	})
 }
