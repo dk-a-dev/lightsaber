@@ -44,20 +44,34 @@ make deploy/prod
 
 ## 🔧 Configuration
 
-Create a `.env` file:
-```env
-# Database
-DB_PASSWORD=your_secure_password
+### Environment Setup
 
-# SMTP (optional)
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_USERNAME=your_username
-SMTP_PASSWORD=your_password
-SMTP_SENDER=your@email.com
+1. **Copy the example environment file:**
+   ```bash
+   cp .env.example .env
+   ```
 
-# CORS (optional)
-TRUSTED_ORIGINS=https://yourdomain.com
+2. **Edit `.env` with your settings:**
+   ```env
+   # Database
+   DB_USER=greenlight
+   DB_PASSWORD=your_secure_password
+
+   # SMTP (for email functionality)
+   HOST=sandbox.smtp.mailtrap.io
+   PORT=2525
+   USERNAME=your_smtp_username
+   PASSWORD=your_smtp_password
+   SENDER=your@email.com
+
+   # CORS (for frontend integration)
+   TRUSTED_ORIGINS=http://localhost:9000,http://localhost:9001
+
+   # Database URL (for production)
+   DATABASE_URL=postgres://username:password@host:port/database
+   ```
+
+⚠️ **Never commit your `.env` file to version control!** It contains sensitive information.
 ```
 
 ## 🌐 API Endpoints

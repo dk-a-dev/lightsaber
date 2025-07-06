@@ -11,7 +11,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-COPY .env .env
+# Create a default .env if none exists
+RUN if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/api ./cmd/api
 
@@ -24,6 +25,7 @@ RUN apk --no-cache add ca-certificates && \
 WORKDIR /app
 
 COPY --from=builder /app/api /app/api
+# Copy environment file
 COPY --from=builder /app/.env /app/.env
 
 USER appuser
