@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"lightsaber.dkadev.xyz/internal/data"
 	"lightsaber.dkadev.xyz/internal/validator"
@@ -47,6 +46,15 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
+		return
+	}
+
+	// Auto-activate user for easier testing (skip email verification)
+	user.Activated = true
+	err = app.models.Users.Update(user)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	err = app.models.Permissions.AddForUser(user.ID, "movies:read")
@@ -55,24 +63,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	// Skip email sending for easier testing
+	// Note: In production, you would send an activation email here
 
-	app.background(func() {
-		data := map[string]any{
-			"activationToken": token.Plaintext,
-			"userID":          user.ID,
-		}
-		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
-		if err != nil {
-			app.logger.PrintError(err, nil)
-		}
-	})
-
-	err = app.writeJson(w, http.StatusAccepted, envelope{"user": user}, nil)
+	err = app.writeJson(w, http.StatusCreated, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
