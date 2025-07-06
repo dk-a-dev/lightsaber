@@ -84,9 +84,45 @@ docker/build:
 ## docker/up: Start services using Docker Compose
 .PHONY: docker/up
 docker/up:
-	docker-compose up --build
+	docker-compose up --build -d
 
 ## docker/down: Stop and remove containers
 .PHONY: docker/down
 docker/down:
-	docker-compose down
+	docker-compose down -v
+
+## docker/prod/up: Start production services
+.PHONY: docker/prod/up
+docker/prod/up:
+	docker-compose -f docker-compose.prod.yml up --build -d
+
+## docker/prod/down: Stop production services
+.PHONY: docker/prod/down
+docker/prod/down:
+	docker-compose -f docker-compose.prod.yml down -v
+
+## docker/logs: Show logs from all services
+.PHONY: docker/logs
+docker/logs:
+	docker-compose logs -f
+
+## docker/logs/api: Show API logs only
+.PHONY: docker/logs/api
+docker/logs/api:
+	docker-compose logs -f api
+
+## deploy: Deploy to development environment
+.PHONY: deploy
+deploy:
+	./deploy.sh dev
+
+## deploy/prod: Deploy to production environment
+.PHONY: deploy/prod
+deploy/prod:
+	./deploy.sh prod
+
+## test: run all tests
+.PHONY: test
+test:
+	@echo 'Running tests...'
+	go test -v -race -buildvcs ./...

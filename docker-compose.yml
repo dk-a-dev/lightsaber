@@ -7,12 +7,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
-    volumes:
-      - ./.env:/app/.env
+    env_file:
+      - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
-      - GREENLIGHT_DB_DSN=postgres://greenlight:password@db:5432/greenlight?sslmode=disable
+      - DATABASE_URL=postgres://greenlight:password@db:5432/greenlight?sslmode=disable
 
   db:
     image: postgres:16-alpine
@@ -24,14 +27,21 @@ services:
       POSTGRES_DB: greenlight
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U greenlight -d greenlight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   migrate:
     image: migrate/migrate
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./migrations:/migrations
-    entrypoint: [ "migrate", "-path=/migrations", "-database", "postgres://greenlight:password@db:5432/greenlight?sslmode=disable", "up" ]
+    command: ["-path", "/migrations", "-database", "postgres://greenlight:password@db:5432/greenlight?sslmode=disable", "up"]
+    restart: "no"
 
 volumes:
   db_data:

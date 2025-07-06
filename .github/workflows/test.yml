@@ -1,0 +1,47 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: greenlight
+          POSTGRES_DB: greenlight_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+    
+    - name: Install migrate
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/local/bin/
+    
+    - name: Run migrations
+      run: migrate -path ./migrations -database "postgres://greenlight:password@localhost:5432/greenlight_test?sslmode=disable" up
+      
+    - name: Run tests
+      run: go test -v -race -buildvcs ./...
+      env:
+        DATABASE_URL: "postgres://greenlight:password@localhost:5432/greenlight_test?sslmode=disable"

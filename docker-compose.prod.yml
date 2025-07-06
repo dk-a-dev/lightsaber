@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:4000"  # Map container port 4000 to host port 80
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      - DATABASE_URL=postgres://greenlight:${DB_PASSWORD:-password}@db:5432/greenlight?sslmode=disable
+      - HOST=${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      - PORT=${SMTP_PORT:-2525}
+      - USERNAME=${SMTP_USERNAME:-}
+      - PASSWORD=${SMTP_PASSWORD:-}
+      - SENDER=${SMTP_SENDER:-}
+      - TRUSTED_ORIGINS=${TRUSTED_ORIGINS:-*}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/v1/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: greenlight
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: greenlight
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U greenlight -d greenlight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://greenlight:${DB_PASSWORD:-password}@db:5432/greenlight?sslmode=disable", "up"]
+    restart: "no"
+
+volumes:
+  db_data:
